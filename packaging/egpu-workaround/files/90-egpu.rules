@@ -1,0 +1,30 @@
+# eGPU bring-up / tear-down on Thunderbolt hotplug.
+# 只匹配本项目的 dock（FEVM FNGT5 PRO）。见 plan/egpu-automation-plan.md §4.
+#
+# 实测要点：
+#  - ADD：用 systemd device unit 的 SYSTEMD_WANTS 拉起 egpu-up.service；
+#          ATTR{device_name} 在 add 时可读，用来锁定本 dock。
+#  - REMOVE：① SYSTEMD_WANTS 不生效（systemd 不为正在消失的设备拉起服务）；
+#            ② 此时 sysfs 属性已消失，ATTR{device_name} 匹配不上，
+#               只能用 uevent 里仍带的 ENV{DEVTYPE}。
+#            ③ 用 RUN 直接调 systemctl。
+ACTION=="add", SUBSYSTEM=="thunderbolt", ENV{DEVTYPE}=="thunderbolt_device", ATTR{device_name}=="FNGT5 PRO", TAG+="systemd", ENV{SYSTEMD_WANTS}+="egpu-up.service"
+ACTION=="remove", SUBSYSTEM=="thunderbolt", ENV{DEVTYPE}=="thunderbolt_device", RUN+="/usr/bin/systemctl --no-block start egpu-down.service"
+
+# ---------------------------------------------------------------------------
+# O1.1：TB 路径 PM 钉住（power/control=on + d3cold_allowed=0）
+#
+# 目的：60-autosuspend.rules 会把桥设成 power/control=auto；让 TB 隧道上的
+#       设备进 D3cold / 运行时挂起会打断隧道（本机 s2idle 会直接打死链路，C25）。
+#       本文件编号 90 > 60，故这些赋值在 autosuspend 规则之后生效。
+# 范围：GPU 的父链 + GPU 自身（根口 → JHL9480 → … → GPU）。
+#       audio 兄弟功能（10de:22eb）不在父链上，属 O1.2（当前未启用）。
+# 兜底：egpu-up.sh 的 pin_pm_path 会再 assert 一次。
+# 见 plan/egpu-optimization-plan.md O1.1。
+# ---------------------------------------------------------------------------
+# Intel Core Ultra USB-C PCIe Root Port（开机即存在）
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0xe44e", ATTR{power/control}="on", ATTR{d3cold_allowed}="0"
+# JHL9480 Thunderbolt 5 上游/下游桥
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x5786", ATTR{power/control}="on", ATTR{d3cold_allowed}="0"
+# NVIDIA GPU
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{device}=="0x2d04", ATTR{power/control}="on", ATTR{d3cold_allowed}="0"

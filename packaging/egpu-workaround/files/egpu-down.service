@@ -1,0 +1,10 @@
+[Unit]
+Description=eGPU tear-down (unload nvidia)
+Documentation=man:egpu-down.sh(8)
+Conflicts=egpu-up.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/egpu-down.sh
+TimeoutStartSec=90
+Nice=10

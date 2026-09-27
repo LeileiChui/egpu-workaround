@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>LeileiChui@users.noreply.github.com</email>
+		<name>LeileiChui</name>
+	</maintainer>
+	<longdescription>
+		Automation for a Thunderbolt/USB4 NVIDIA eGPU: rescan the dock PCIe
+		fabric, cap the GPU link to PCIe Gen3 with Hardware Autonomous Speed
+		Disable (HASD), and load the nvidia module only afterwards. Ships a
+		systemd sleep hook so the driver is unloaded before suspend.
+	</longdescription>
+</pkgmetadata>

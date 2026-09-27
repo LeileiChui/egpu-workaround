@@ -1,0 +1,12 @@
+[Unit]
+Description=eGPU bring-up (PCI rescan + Gen3/HASD cap + load nvidia)
+Documentation=man:egpu-up.sh(8)
+After=systemd-udev-settle.service
+Conflicts=egpu-down.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/egpu-up.sh
+# 卡死保护：绝不允许它把 udev/启动链路拖住
+TimeoutStartSec=180
+Nice=10
